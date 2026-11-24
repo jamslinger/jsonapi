@@ -17,7 +17,8 @@ func TestParseJSONTag(t *testing.T) {
 		given       any
 		expect      string
 		expectOK    bool
-		expectOmit  bool
+		expectOmitE bool
+		expectOmitZ bool
 	}{
 		{
 			description: "valid",
@@ -25,36 +26,50 @@ func TestParseJSONTag(t *testing.T) {
 			given: struct {
 				Foo string `json:"foo"`
 			}{},
-			expect:     "foo",
-			expectOK:   true,
-			expectOmit: false,
+			expect:      "foo",
+			expectOK:    true,
+			expectOmitE: false,
+			expectOmitZ: false,
 		}, {
-			description: "valid multiple values",
+			description: "valid multiple values (omitempty)",
 			fieldName:   "Foo",
 			given: struct {
 				Foo string `json:"foo,omitempty"`
 			}{},
-			expect:     "foo",
-			expectOK:   true,
-			expectOmit: true,
+			expect:      "foo",
+			expectOK:    true,
+			expectOmitE: true,
+			expectOmitZ: false,
+		}, {
+			description: "valid multiple values (omitzero)",
+			fieldName:   "Foo",
+			given: struct {
+				Foo string `json:"foo,omitzero"`
+			}{},
+			expect:      "foo",
+			expectOK:    true,
+			expectOmitE: false,
+			expectOmitZ: true,
 		}, {
 			description: "no tag, uses field name",
 			fieldName:   "Foo",
 			given: struct {
 				Foo string
 			}{},
-			expect:     "Foo",
-			expectOK:   true,
-			expectOmit: false,
+			expect:      "Foo",
+			expectOK:    true,
+			expectOmitE: false,
+			expectOmitZ: false,
 		}, {
 			description: "unexported field",
 			fieldName:   "foo",
 			given: struct {
 				foo string
 			}{},
-			expect:     "",
-			expectOK:   false,
-			expectOmit: false,
+			expect:      "",
+			expectOK:    false,
+			expectOmitE: false,
+			expectOmitZ: false,
 		},
 	}
 
@@ -67,10 +82,11 @@ func TestParseJSONTag(t *testing.T) {
 			sf, ok := reflect.TypeOf(tc.given).FieldByName(tc.fieldName)
 			is.Equal(t, true, ok)
 
-			tag, ok, omit := parseJSONTag(sf)
+			tag, ok, omitE, omitZ := parseJSONTag(sf)
 			is.Equal(t, tc.expectOK, ok)
 			is.Equal(t, tc.expect, tag)
-			is.Equal(t, tc.expectOmit, omit)
+			is.Equal(t, tc.expectOmitE, omitE)
+			is.Equal(t, tc.expectOmitZ, omitZ)
 		})
 	}
 }

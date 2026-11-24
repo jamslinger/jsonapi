@@ -406,11 +406,14 @@ func (d *document) makeResourceObject(v any, vt reflect.Type, m *Marshaler) (*re
 				// relationships must only be resource identifier objects so skip attributes
 				continue
 			}
-			fieldName, ok, omit := parseJSONTag(ft)
+			fieldName, ok, omitE, omitZ := parseJSONTag(ft)
 			if !ok {
 				continue
 			}
-			if f.IsZero() && omit {
+			if omitE && f.IsZero() {
+				continue
+			}
+			if omitZ && isZero(f) {
 				continue
 			}
 			ro.Attributes[fieldName] = f.Interface()
@@ -436,11 +439,14 @@ func (d *document) makeResourceObject(v any, vt reflect.Type, m *Marshaler) (*re
 				// relationship nesting must occur in include data, not the relationship fields
 				continue
 			}
-			fieldName, ok, omit := parseJSONTag(ft)
+			fieldName, ok, omitE, omitZ := parseJSONTag(ft)
 			if !ok {
 				continue
 			}
-			if f.IsZero() && omit {
+			if omitE && f.IsZero() {
+				continue
+			}
+			if omitZ && isZero(f) {
 				continue
 			}
 
@@ -566,4 +572,25 @@ func addOptionalDocumentFields(d *document, m *Marshaler) error {
 	d.Links = m.link
 
 	return nil
+}
+
+type zeroer interface {
+	IsZero() bool
+}
+
+func isZero(v reflect.Value) bool {
+	if !v.IsValid() {
+		return true
+	}
+	if v.CanInterface() {
+		if x, ok := v.Interface().(zeroer); ok {
+			return x.IsZero()
+		}
+	}
+	if v.CanAddr() && v.Addr().CanInterface() {
+		if x, ok := v.Addr().Interface().(zeroer); ok {
+			return x.IsZero()
+		}
+	}
+	return v.IsZero()
 }

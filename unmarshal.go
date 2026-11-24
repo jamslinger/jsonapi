@@ -305,7 +305,7 @@ func (ro *resourceObject) unmarshalFields(v any, rv reflect.Value, rt reflect.Ty
 
 			return ErrUnmarshalInvalidPrimaryField
 		case relationship:
-			name, exported, _ := parseJSONTag(ft)
+			name, exported, _, _ := parseJSONTag(ft)
 			if !exported {
 				continue
 			}

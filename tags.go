@@ -35,22 +35,26 @@ type tag struct {
 	omitEmpty    bool
 }
 
-func parseJSONTag(f reflect.StructField) (string, bool, bool) {
+func parseJSONTag(f reflect.StructField) (string, bool, bool, bool) {
 	t := f.Tag.Get("json")
 	if t == "" {
 		if f.IsExported() {
-			return f.Name, true, false
+			return f.Name, true, false, false
 		}
-		return t, false, false
+		return t, false, false, false
 	}
 	ts := strings.Split(t, ",")
 
-	var omit bool
-	if len(ts) > 1 {
-		omit = ts[1] == "omitempty"
+	var omitE, omitZ bool
+	for i := 1; i < len(ts); i++ {
+		switch ts[i] {
+		case "omitempty":
+			omitE = true
+		case "omitzero":
+			omitZ = true
+		}
 	}
-
-	return ts[0], f.IsExported(), omit
+	return ts[0], f.IsExported(), omitE, omitZ
 }
 
 func parseJSONAPITag(f reflect.StructField) (*tag, error) {
